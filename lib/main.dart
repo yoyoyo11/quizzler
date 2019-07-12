@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'question.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import 'quiz_brain.dart';
+
+QuizBrain quizBrain = QuizBrain();
 
 void main() => runApp(Quizzler());
 
@@ -27,22 +30,53 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
   List<Widget> scoreKeeper = [];
+  int correctScore = 0;
+  int incorrectScore = 0;
 
-  // List<String> questions = [
-  //   'You can lead a cow down stairs but not up stairs.',
-  //   'Approximately one quarter of human bones are in the feet.',
-  //   'A slug\'s blood is green.'
-  // ];
+  void checkAnswer(bool userPickedAnswer) {
+    bool correctAnswer = quizBrain.getQuestionAnswer();
+    setState(() {
+      if (quizBrain.isFinished()) {
+        Alert(
+          context: context,
+          type: AlertType.error,
+          title: "END OF QUIZ",
+          desc: "You got $correctScore correct and $incorrectScore incorrect.",
+          buttons: [
+            DialogButton(
+              child: Text(
+                "OK",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () => Navigator.pop(context),
+              width: 120,
+            )
+          ],
+        ).show();
 
-  //List<bool> answers = [false, true, true];
+        quizBrain.resetQuestionNumber();
+        scoreKeeper.clear();
+        correctScore = 0;
+        incorrectScore = 0;
+      } else {
+        if (userPickedAnswer == correctAnswer) {
+          scoreKeeper.add(Icon(
+            Icons.check,
+            color: Colors.green,
+          ));
+          correctScore++;
+        } else {
+          scoreKeeper.add(Icon(
+            Icons.close,
+            color: Colors.red,
+          ));
+          incorrectScore++;
+        }
 
-  List<Question> questions = [
-    Question(q: 'You can lead a cow down stairs but not up stairs.', a: false),
-    Question(q: 'Approximately one quarter of human bones are in the feet.', a: true),
-    Question(q: 'A slug\'s blood is green.', a: true)
-  ];
-
-  int questionNumber = 0;
+        quizBrain.nextQuestion();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +90,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                //questions[questionNumber]
-                
-                questions[questionNumber].questionText,
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -82,16 +114,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //print(questionAnswers[questionNumber].questionText);
-                //bool correctAnswer = answers[questionNumber];
-                bool correctAnswer = questions[questionNumber].questionAnswer;
-
-                correctAnswer ? print('User right!') : print('User wrong!');
-                
-                setState(() {
-                  questionNumber++;
-                });
-                
+                checkAnswer(true);
               },
             ),
           ),
@@ -109,16 +132,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-
-                //bool correctAnswer = answers[questionNumber];
-                bool correctAnswer = questions[questionNumber].questionAnswer;
-
-                !correctAnswer ? print('User right!') : print('User wrong!');
-
-                setState(() {
-                  questionNumber++;
-                });
-                
+                checkAnswer(false);
               },
             ),
           ),
